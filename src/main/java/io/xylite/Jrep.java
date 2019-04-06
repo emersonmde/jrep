@@ -8,44 +8,56 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 class Jrep {
     public static void main(String[] args) throws IOException {
         Path path = FileSystems.getDefault().getPath("test");
         Pattern pattern = Pattern.compile("see");
-        matchInDirectory(pattern, path);
+        printInDirectory(pattern, path);
     }
 
-    private static void matchInDirectory(Pattern pattern, Path path) throws IOException {
-        Map<Path, List<String>> results = Files.walk(path).parallel()
+    private static void printInDirectory(Pattern pattern, Path path) throws IOException {
+        Files.walk(path).parallel()
                 .filter(Files::isRegularFile)
-                .collect(
-                        Collectors.toMap(
-                                Function.identity(),
-                                (Path p) -> (match(pattern, p))
-                        )
-                );
-
-        System.out.println(results);
+                .forEach((Path p) -> printMatches(pattern, p));
     }
 
-    private static List<String> match(Pattern pattern, Path path) {
-        List<String> matches = Collections.emptyList();
-
+    private static void printMatches(Pattern pattern, Path path) {
         try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
-            matches = reader.lines().parallel()
+            reader.lines().parallel()
                     .filter(s -> pattern.matcher(s).find())
-                    .collect(Collectors.toList());
+                    .forEach(System.out::println);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return matches;
     }
+
+//    private static void matchInDirectory(Pattern pattern, Path path) throws IOException {
+//        Map<Path, List<String>> results = Files.walk(path).parallel()
+//                .filter(Files::isRegularFile)
+//                .collect(
+//                        Collectors.toMap(
+//                                Function.identity(),
+//                                (Path p) -> (match(pattern, p))
+//                        )
+//                );
+//
+//        System.out.println(results);
+//    }
+
+//    private static List<String> match(Pattern pattern, Path path) {
+//        List<String> matches = Collections.emptyList();
+//
+//        try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
+//            matches = reader.lines().parallel()
+//                    .filter(s -> pattern.matcher(s).find())
+//                    .collect(Collectors.toList());
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return matches;
+//    }
 }
